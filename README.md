@@ -20,3 +20,13 @@ git push
 
 
 **每天开始工作前先运行 `git pull`，结束时 `git add`、`git commit`、`git push`。**
+
+## 接口约定
+
+| 项目 | 约定 |
+|------|------|
+| 状态表示 | 字符串 'S'、'I'、'R' |
+| SIR 函数 | `simulate_sir(n, i0, beta, gamma, days)` 返回三个列表 `(S, I, R)`，每天一个值 |
+| 画图函数 | `plot_sir(S, I, R)` 接收这三个列表并画图 |
+| 参数来源 | 统一从 `config.py` 读取 |
+| 文件分工 | `model.py` 只放计算，不画图；`render.py` 只放画图，不做计算 |
