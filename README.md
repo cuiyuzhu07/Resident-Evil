@@ -14,5 +14,4 @@ git push
 
 **before work, run `git pull`，when it ends `git add`、`git commit`、`git push`。**
 
-## 接口约定
 
