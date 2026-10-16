@@ -1,17 +1,27 @@
-# Resident-Evil
-DSBA Python group project
-## steps
+# V0: Minimal viable version
 
-1. Clone the repository: In VS Code, press Ctrl+Shift+P (Cmd+Shift+P on Mac), type Git: Clone, paste the repository's HTTPS URL, select a local folder, and click "Open".
-2. Create a virtual environment: Run the following in the VS Code terminal (Ctrl+``): python -m venv .venvActivation for Mac/Linux:source .venv/bin/activateOnce activated successfully,(.venv)` will appear on the far left of the terminal.
-3. Install dependencies: pip install -r requirements.txtSelect the interpreter: Ctrl+Shift+P (Cmd+Shift+P on Mac) $\rightarrow$ Python: Select Interpreter $\rightarrow$ choose the one inside .venv.Verify: Run python main.py. If you see project skeleton ready, it is set up successfully.
+Agent-based SIR simulation: people move randomly on a 2D map and infect
+each other. The SIR equations are provided as a reference curve.
 
+## Run (from the project root)
+    pip install -r requirements.txt
+    python -m V0.main
 
-git add render.py
-git commit -m “add plot_sir”
-git push
+Do not run `python V0/main.py` directly: the modules use relative imports.
 
+## Contents
+- `config.py`: simulation parameters
+- `model.py`: SIR equations, people, movement, `World`
+- `infection.py`: contact detection and infection logic
+- `render.py`: plots and animation
+- `main.py`: entry point
 
-**before work, run `git pull`，when it ends `git add`、`git commit`、`git push`。**
+## Design choices
+- A person is a dict (`x`, `y`, `state`).
+- Movement: Gaussian random steps, reflection at the borders.
+- SIR equations use Euler steps with `dt = 0.1`.
 
+## Limitations
+- No incubation, shelters, quarantine or vaccine (added in V1).
+- No command-line arguments or logging yet (added in V2).
 
