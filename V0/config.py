@@ -2,9 +2,9 @@
 
 N = 200            # total population
 I0 = 5             # initially infected
-BETA = 0.3         # infection rate
-GAMMA = 0.1        # removal rate
-DAYS = 100         # simulation length (days)
+BETA = 0.8         # infection rate
+GAMMA = 0.03        # removal rate
+DAYS = 300         # simulation length (days)
 SEED = 42          # random seed
 
 SIZE = 100         # map size (for agent-based model later)

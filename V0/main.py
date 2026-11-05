@@ -1,6 +1,7 @@
 from . import config #test model working or not
 from .model import simulate_sir
 
+
 S, I, R = simulate_sir(config.N, config.I0, config.BETA,
                        config.GAMMA, config.DAYS)
 

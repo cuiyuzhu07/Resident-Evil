@@ -1,3 +1,5 @@
+import random
+from .infection import find_contacts, update_infection
 def simulate_sir(n, i0, beta, gamma, days, dt=0.1):
     """Simulate the SIR model with Euler steps.
 
@@ -45,6 +47,9 @@ class World:
 
     def __init__(self, config):
         """Create N people and mark the first I0 as infected."""
+        
+        self.config = config
+
         random.seed(config.SEED)
         self.size = config.SIZE
         self.step_size = config.STEP_SIZE
@@ -58,6 +63,14 @@ class World:
         for person in self.people:
             move(person, self.step_size, self.size)
         # --- B plugs the infection logic here ---
+        contacts = find_contacts(self.people, 2.0)
+
+        update_infection(
+            self.people,
+            contacts,
+            self.config.BETA,
+            self.config.GAMMA
+        )
         self.day += 1
 
     def get_positions(self):
