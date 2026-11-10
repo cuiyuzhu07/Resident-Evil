@@ -2,11 +2,12 @@
 # Contact infection
 # if a zombie comes closer to human it will catch and bite
 # along with transmit the disease
+"""Grid partitioning for contact detection, and infection/removal update."""
 import random
 import math
 
-contact_dis = 8.0
-cell_size = 8.0
+contact_dis = 2.0
+cell_size = 2.0
 def get_cell(x, y, cell_size):
     return int(x // cell_size), int(y // cell_size)
 
@@ -55,14 +56,6 @@ def find_contacts(people, cell_size):
                             contacts.append((person, other))
 
     return contacts
-
-p1 = {"x": 10, "y": 10, "state": "I"}
-p2 = {"x": 11, "y": 11, "state": "S"}
-p3 = {"x": 20, "y": 20, "state": "S"}
-
-people = [p1, p2, p3]
-
-print(find_contacts(people, cell_size))
 
 def update_infection(people, contacts, beta, gamma):
     """Update infection and removal states after contacts are found."""
