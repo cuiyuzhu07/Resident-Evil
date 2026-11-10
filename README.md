@@ -28,8 +28,8 @@ The project is developed in three runnable stages (V0, V1, V2).
 ## Versions
 | Version | Content | Status |
 |---|---|---|
-| V0 | SIR equations + agent-based simulation (move, infect, animate) | in progress |
-| V1 | Story extensions (incubation, zombie types, quarantine, vaccine) | planned |
+| V0 | SIR equations + agent-based simulation (move, infect, animate) | done |
+| V1 | Story extensions (incubation, zombie types, quarantine, vaccine) | in progress |
 | V2 | Tests, logging, argparse, config file, interface, experiments | planned |
 
 ## Setup
