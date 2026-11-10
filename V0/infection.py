@@ -7,7 +7,7 @@ import random
 import math
 
 contact_dis = 2.0
-cell_size = 2.0
+cell_size = contact_dis
 def get_cell(x, y, cell_size):
     return int(x // cell_size), int(y // cell_size)
 
