@@ -11,3 +11,5 @@ SIZE = 100         # map size (for agent-based model later)
 STEP_SIZE = 1.0    # movement per step (for agent-based model later)
 SHELTERS = [(20, 20, 8, 10),    # x, y, radius, capacity
             (80, 80, 8, 10)]
+FLEE_RADIUS = 10.0   # survivors react to zombies within this distance
+FLEE_SPEED = 1.5     # distance run per step when fleeing

@@ -2,9 +2,11 @@
 
 No plotting here. V1 adds shelters on top of V0.
 """
+import math
 import random
 
-from .infection import find_contacts, update_infection, cell_size
+from .infection import (find_contacts, update_infection, cell_size,
+                        build_grid, get_cell)
 
 
 def simulate_sir(n, i0, beta, gamma, days, dt=0.1):
@@ -73,6 +75,40 @@ def enter_shelters(people, shelters):
                 shelter["occupants"] += 1
                 break
 
+def reflect(value, size):
+    """Reflect a coordinate back inside [0, size]."""
+    if value < 0:
+        return -value
+    if value > size:
+        return 2 * size - value
+    return value
+
+
+def find_nearest_zombie(person, grid, radius):
+    """Return the nearest infected person within `radius`, or None.
+
+    `grid` is built with build_grid(zombies, radius), so only the cell
+    of the person and its 8 neighbours need to be checked.
+    """
+    cx, cy = get_cell(person["x"], person["y"], radius)
+    best, best_d2 = None, radius * radius
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            for zombie in grid.get((cx + dx, cy + dy), []):
+                d2 = ((person["x"] - zombie["x"]) ** 2
+                      + (person["y"] - zombie["y"]) ** 2)
+                if 0 < d2 <= best_d2:
+                    best, best_d2 = zombie, d2
+    return best
+
+
+def flee(person, zombie, speed, size):
+    """Move `person` a distance `speed` directly away from `zombie`."""
+    dx = person["x"] - zombie["x"]
+    dy = person["y"] - zombie["y"]
+    dist = math.hypot(dx, dy)
+    person["x"] = reflect(person["x"] + speed * dx / dist, size)
+    person["y"] = reflect(person["y"] + speed * dy / dist, size)
 
 class World:
     """Container for the population and the simulation clock."""
@@ -90,9 +126,22 @@ class World:
             person["state"] = "I"
 
     def step(self):
-        """Advance one step: move, enter shelters, then infection."""
+        """Advance one step: move/flee, enter shelters, then infection."""
+        radius = getattr(self.config, "FLEE_RADIUS", 0)
+        speed = getattr(self.config, "FLEE_SPEED", 0)
+        zombie_grid = {}
+        if radius > 0:
+            zombie_grid = build_grid(
+                [p for p in self.people if p["state"] == "I"], radius)
         for person in self.people:
-            if not person.get("sheltered"):
+            if person.get("sheltered"):
+                continue
+            zombie = None
+            if radius > 0 and person["state"] == "S":
+                zombie = find_nearest_zombie(person, zombie_grid, radius)
+            if zombie is not None:
+                flee(person, zombie, speed, self.size)
+            else:
                 move(person, self.step_size, self.size)
         enter_shelters(self.people, self.shelters)
         contacts = find_contacts(self.people, cell_size)
