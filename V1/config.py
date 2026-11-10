@@ -9,3 +9,5 @@ SEED = 42          # random seed
 
 SIZE = 100         # map size (for agent-based model later)
 STEP_SIZE = 1.0    # movement per step (for agent-based model later)
+SHELTERS = [(20, 20, 8, 10),    # x, y, radius, capacity
+            (80, 80, 8, 10)]

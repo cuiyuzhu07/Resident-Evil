@@ -1,5 +1,12 @@
+"""Simulation logic for V1: SIR equations, people, shelters and World.
+
+No plotting here. V1 adds shelters on top of V0.
+"""
 import random
-from .infection import find_contacts, update_infection
+
+from .infection import find_contacts, update_infection, cell_size
+
+
 def simulate_sir(n, i0, beta, gamma, days, dt=0.1):
     """Simulate the SIR model with Euler steps.
 
@@ -19,8 +26,6 @@ def simulate_sir(n, i0, beta, gamma, days, dt=0.1):
         I.append(i)
         R.append(r)
     return S, I, R
-
-import random
 
 
 def make_person(size, state="S"):
@@ -42,29 +47,57 @@ def move(person, step_size, size):
         elif person[axis] > size:
             person[axis] = 2 * size - person[axis]
 
+
+def make_shelters(specs):
+    """Create shelter dicts from (x, y, radius, capacity) tuples."""
+    return [{"x": x, "y": y, "radius": r, "capacity": c, "occupants": 0}
+            for x, y, r, c in specs]
+
+
+def enter_shelters(people, shelters):
+    """Let susceptible people inside a shelter's radius enter it.
+
+    A person enters only if the shelter is not full. Sheltered people
+    are flagged with person["sheltered"] = True.
+    """
+    for person in people:
+        if person["state"] != "S" or person.get("sheltered"):
+            continue
+        for shelter in shelters:
+            if shelter["occupants"] >= shelter["capacity"]:
+                continue
+            dx = person["x"] - shelter["x"]
+            dy = person["y"] - shelter["y"]
+            if dx * dx + dy * dy <= shelter["radius"] ** 2:
+                person["sheltered"] = True
+                shelter["occupants"] += 1
+                break
+
+
 class World:
     """Container for the population and the simulation clock."""
 
     def __init__(self, config):
-        """Create N people and mark the first I0 as infected."""
-        
+        """Create N people, mark the first I0 as infected, set up shelters."""
         self.config = config
-
         random.seed(config.SEED)
         self.size = config.SIZE
         self.step_size = config.STEP_SIZE
         self.day = 0
+        self.shelters = make_shelters(getattr(config, "SHELTERS", []))
         self.people = [make_person(self.size) for _ in range(config.N)]
         for person in self.people[:config.I0]:
             person["state"] = "I"
 
     def step(self):
-        """Advance the simulation by one step: everybody moves."""
+        """Advance one step: move, enter shelters, then infection."""
         for person in self.people:
-            move(person, self.step_size, self.size)
-        # --- B plugs the infection logic here ---
-        contacts = find_contacts(self.people, 2.0)
-
+            if not person.get("sheltered"):
+                move(person, self.step_size, self.size)
+        enter_shelters(self.people, self.shelters)
+        contacts = find_contacts(self.people, cell_size)
+        contacts = [(a, b) for a, b in contacts
+                    if not a.get("sheltered") and not b.get("sheltered")]
         update_infection(
             self.people,
             contacts,
@@ -88,12 +121,6 @@ class World:
             counts[person["state"]] += 1
         return counts
 
-from . import config
-from .model import World
-
-world = World(config)
-print("start:", world.get_counts())
-for _ in range(100):
-    world.step()
-print("after 100 steps:", world.get_counts())
-print("first 3 positions:", world.get_positions()[:3])
+    def get_sheltered_count(self):
+        """Return the number of people currently inside a shelter."""
+        return sum(1 for p in self.people if p.get("sheltered"))

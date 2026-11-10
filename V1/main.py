@@ -17,6 +17,7 @@ def main():
     print("start:", world.get_counts())
     animation = animate_world(world, frames=300, interval=100)
     print("end:", world.get_counts())
+    print("sheltered:", world.get_sheltered_count())
     return animation
 
 
