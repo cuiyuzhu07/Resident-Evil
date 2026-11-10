@@ -1,6 +1,7 @@
 """Tests for the world and movement."""
 from V0 import config
 from V0.model import World
+from types import SimpleNamespace
 
 
 def test_population_conserved():
@@ -18,3 +19,12 @@ def test_inside_bounds():
         world.step()
         assert all(0 <= x <= world.size and 0 <= y <= world.size
                    for x, y in world.get_positions())
+
+def test_beta_zero_no_new_infection():
+        """With beta = 0 nobody new gets infected."""
+        cfg = SimpleNamespace(N=200, I0=5, BETA=0.0, GAMMA=0.0,
+                                SEED=42, SIZE=100, STEP_SIZE=1.0)
+        world = World(cfg)
+        for _ in range(200):
+            world.step()
+        assert world.get_counts() == {"S": 195, "I": 5, "R": 0}
