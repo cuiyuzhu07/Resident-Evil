@@ -1,7 +1,8 @@
 """Plotting and animation for V1 (member C).
 
 Draws the SIR curves and the live agent animation, including shelters,
-quarantine walls and the number of vaccinated people.
+quarantine walls, supply crates, the number of vaccinated people and
+the number of zombies killed.
 """
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -55,6 +56,7 @@ def animate_world(world, frames=100, interval=100):
     draw_map(ax, world)
 
     # Create scatter points and text once
+    crates = ax.scatter([], [], s=30, marker="s", color="saddlebrown")
     scatter = ax.scatter([], [], s=25)
     count_text = ax.text(
         0.02, 1.02, "",
@@ -79,6 +81,9 @@ def animate_world(world, frames=100, interval=100):
         # Update existing points instead of drawing new ones
         scatter.set_offsets(positions)
         scatter.set_color([colors[s] for s in states])
+        supplies = getattr(world, "supplies", [])
+        crates.set_offsets([(c["x"], c["y"]) for c in supplies]
+                           or [(float("nan"), float("nan"))])
 
         # Update live counts
         text = (f"Day: {world.day} | "
@@ -87,9 +92,11 @@ def animate_world(world, frames=100, interval=100):
                 f"R: {counts['R']}")
         if hasattr(world, "get_vaccinated_count"):
             text += f" | Vaccinated: {world.get_vaccinated_count()}"
+        if hasattr(world, "zombies_killed"):
+            text += f" | Killed: {world.zombies_killed}"
         count_text.set_text(text)
 
-        return scatter, count_text
+        return scatter, crates, count_text
 
     animation = FuncAnimation(
         fig,

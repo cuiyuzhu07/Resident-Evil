@@ -22,3 +22,11 @@ QUARANTINE_ZONES = [(55, 10, 90, 45)]
 VACCINE_DAY = 20          # first day of vaccination
 VACCINE_RATE = 0.05       # fraction of susceptibles vaccinated per day
 VACCINE_EFFICACY = 0.9    # probability that a vaccination gives immunity
+
+# Task 3.7 (optional): supplies. Set SUPPLY_COUNT = 0 to switch off.
+SUPPLY_COUNT = 30           # crates on the map at the start (half ammo, half food)
+SUPPLY_PICKUP_RADIUS = 2.0  # a survivor this close to a crate picks it up
+AMMO_PER_CRATE = 3          # bullets in one ammo crate
+FOOD_PER_CRATE = 20         # days of food in one food crate
+FIGHT_WIN_PROB = 0.5        # chance an armed survivor kills a zombie
+FOOD_BONUS = 0.2            # extra chance when the survivor has food

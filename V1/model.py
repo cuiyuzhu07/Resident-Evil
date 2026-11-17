@@ -1,7 +1,7 @@
 """Simulation logic for V1: SIR equations, people, shelters and World.
 
-No plotting here. V1 adds shelters, fleeing, quarantine walls and a
-vaccine event on top of V0.
+No plotting here. V1 adds shelters, fleeing, quarantine walls, a
+vaccine event and supplies on top of V0.
 """
 import math
 import random
@@ -11,6 +11,7 @@ from .infection import (find_contacts, update_infection, cell_size,
 from .quarantine import (WALL_CELL, make_walls, move_off_walls,
                          undo_if_blocked, wall_between)
 from .vaccine import make_vaccine_schedule, vaccinate
+from .supplies import make_supplies, pick_up_supplies, eat, resolve_fights
 
 
 def simulate_sir(n, i0, beta, gamma, days, dt=0.1):
@@ -138,6 +139,10 @@ class World:
             getattr(config, "VACCINE_RATE", 0),
             config.DAYS)
         self.vaccine_efficacy = getattr(config, "VACCINE_EFFICACY", 0)
+        # Task 3.7: supply crates and fights
+        self.supplies = make_supplies(getattr(config, "SUPPLY_COUNT", 0),
+                                      self.size)
+        self.zombies_killed = 0
 
     def step(self):
         """Advance one step: vaccine, move/flee, shelters, then infection."""
@@ -163,12 +168,24 @@ class World:
                 move(person, self.step_size, self.size)
             undo_if_blocked(person, old_x, old_y, self.walls)
         enter_shelters(self.people, self.shelters)
+        if self.supplies:
+            self.supplies = pick_up_supplies(
+                self.people, self.supplies,
+                getattr(self.config, "SUPPLY_PICKUP_RADIUS", 2.0),
+                getattr(self.config, "AMMO_PER_CRATE", 0),
+                getattr(self.config, "FOOD_PER_CRATE", 0))
+        eat(self.people)
         contacts = find_contacts(self.people, cell_size)
         contacts = [(a, b) for a, b in contacts
                     if not a.get("sheltered") and not b.get("sheltered")]
         if self.walls:
             contacts = [(a, b) for a, b in contacts
                         if not wall_between(a, b, self.walls)]
+        contacts, killed = resolve_fights(
+            contacts,
+            getattr(self.config, "FIGHT_WIN_PROB", 0),
+            getattr(self.config, "FOOD_BONUS", 0))
+        self.zombies_killed += killed
         update_infection(
             self.people,
             contacts,
@@ -209,3 +226,13 @@ class World:
         """
         return sum(1 for p in self.people
                    if p["state"] in ("I", "R") and not p.get("immune"))
+
+    def get_supply_counts(self):
+        """Return crates left on the map and supplies carried by survivors.
+
+        Example: {'crates': 12, 'ammo': 20, 'food': 35}.
+        """
+        alive = [p for p in self.people if p["state"] == "S"]
+        return {"crates": len(self.supplies),
+                "ammo": sum(p.get("ammo", 0) for p in alive),
+                "food": sum(p.get("food", 0) for p in alive)}
