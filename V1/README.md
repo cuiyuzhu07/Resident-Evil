@@ -8,6 +8,11 @@ Built on V0 by adding code only. V0 is unchanged and still runs on its own.
 
 Do not run `python V1/main.py` directly: the modules use relative imports.
 
+Player interface (task 4.3) and report charts (task 4.4):
+    python -m V1.interface
+    python -m V1.charts                 # demo experiments
+    python -m V1.charts results.csv     # results of task 4.2
+
 ## New in V1
 - **Shelters (task 3.1)**: circular safe zones with limited capacity,
   defined in `config.py` as `(x, y, radius, capacity)`. A survivor who
@@ -24,19 +29,38 @@ Do not run `python V1/main.py` directly: the modules use relative imports.
   `VACCINE_RATE`. The vaccine works with probability `VACCINE_EFFICACY`;
   immune people become `'R'`. The days are stored in an event table
   `{day: rate}` (`vaccine.py`).
+- **Supplies (task 3.7, optional)**: `SUPPLY_COUNT` crates (half ammo,
+  half food) lie on the map; a survivor within `SUPPLY_PICKUP_RADIUS`
+  picks one up. An armed survivor who meets a zombie fights it: the
+  zombie dies with probability `FIGHT_WIN_PROB` (+ `FOOD_BONUS` with
+  food), and each fight uses one bullet (`supplies.py`).
+
+## Prepared for V2 (member C)
+- **Player interface (task 4.3)**, `interface.py`: a tkinter window with
+  Start/Pause, Lockdown (movement x0.2), Start vaccine, Restart and a
+  speed slider. The loop uses `root.after()`. The `Game` class holds the
+  logic without the window, so it can be tested.
+- **Result charts (task 4.4)**, `charts.py`: infected curves with a
+  mean ± 1 std band, and a boxplot of final infections per strategy,
+  saved in `figures/`. Expected input: a CSV with the columns
+  `strategy, seed, day, S, I, R, total_infected` (to agree with task
+  4.2). Until then `demo_results()` runs small no/early/late vaccine
+  experiments.
 
 ## What changed compared to V0
 | File | Change |
 |---|---|
-| `config.py` | added `SHELTERS`, `FLEE_RADIUS`, `FLEE_SPEED`, `QUARANTINE_ZONES`, `VACCINE_DAY`, `VACCINE_RATE`, `VACCINE_EFFICACY` |
-| `model.py` | added `make_shelters`, `enter_shelters`, `reflect`, `find_nearest_zombie`, `flee`, `get_sheltered_count`, `get_vaccinated_count`, `get_total_infected`; `World.step()` extended |
+| `config.py` | added `SHELTERS`, `FLEE_RADIUS`, `FLEE_SPEED`, `QUARANTINE_ZONES`, `VACCINE_DAY`, `VACCINE_RATE`, `VACCINE_EFFICACY`, supply parameters |
+| `model.py` | added `make_shelters`, `enter_shelters`, `reflect`, `find_nearest_zombie`, `flee`, `get_sheltered_count`, `get_vaccinated_count`, `get_total_infected`, `get_supply_counts`; `World.step()` extended |
 | `quarantine.py` | new: wall cells, wall collision, no infection through walls |
 | `vaccine.py` | new: vaccine event table and daily vaccination |
-| `render.py` | draws shelters and walls, shows the number vaccinated |
+| `supplies.py` | new: supply crates, pick-up and fights |
+| `interface.py`, `charts.py` | new: player interface and report charts |
+| `render.py` | draws shelters, walls and crates, shows vaccinated and killed counts |
 | `infection.py` | unchanged |
 
 Setting `FLEE_RADIUS = 0`, `SHELTERS = []`, `QUARANTINE_ZONES = []` or
-`VACCINE_DAY = None` switches a feature off, which gives the V0 behaviour.
+`VACCINE_DAY = None` or `SUPPLY_COUNT = 0` switches a feature off, which gives the V0 behaviour.
 
 ## Tests
     python -m pytest tests/
