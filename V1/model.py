@@ -1,12 +1,16 @@
 """Simulation logic for V1: SIR equations, people, shelters and World.
 
-No plotting here. V1 adds shelters on top of V0.
+No plotting here. V1 adds shelters, fleeing, quarantine walls and a
+vaccine event on top of V0.
 """
 import math
 import random
 
 from .infection import (find_contacts, update_infection, cell_size,
                         build_grid, get_cell)
+from .quarantine import (WALL_CELL, make_walls, move_off_walls,
+                         undo_if_blocked, wall_between)
+from .vaccine import make_vaccine_schedule, vaccinate
 
 
 def simulate_sir(n, i0, beta, gamma, days, dt=0.1):
@@ -124,9 +128,22 @@ class World:
         self.people = [make_person(self.size) for _ in range(config.N)]
         for person in self.people[:config.I0]:
             person["state"] = "I"
+        # Task 3.5: quarantine walls
+        self.wall_cell = WALL_CELL
+        self.walls = make_walls(getattr(config, "QUARANTINE_ZONES", []))
+        move_off_walls(self.people, self.walls, self.size)
+        # Task 3.6: vaccine event table {day: rate}
+        self.vaccine_schedule = make_vaccine_schedule(
+            getattr(config, "VACCINE_DAY", None),
+            getattr(config, "VACCINE_RATE", 0),
+            config.DAYS)
+        self.vaccine_efficacy = getattr(config, "VACCINE_EFFICACY", 0)
 
     def step(self):
-        """Advance one step: move/flee, enter shelters, then infection."""
+        """Advance one step: vaccine, move/flee, shelters, then infection."""
+        rate = self.vaccine_schedule.get(self.day)
+        if rate:
+            vaccinate(self.people, rate, self.vaccine_efficacy)
         radius = getattr(self.config, "FLEE_RADIUS", 0)
         speed = getattr(self.config, "FLEE_SPEED", 0)
         zombie_grid = {}
@@ -136,6 +153,7 @@ class World:
         for person in self.people:
             if person.get("sheltered"):
                 continue
+            old_x, old_y = person["x"], person["y"]
             zombie = None
             if radius > 0 and person["state"] == "S":
                 zombie = find_nearest_zombie(person, zombie_grid, radius)
@@ -143,10 +161,14 @@ class World:
                 flee(person, zombie, speed, self.size)
             else:
                 move(person, self.step_size, self.size)
+            undo_if_blocked(person, old_x, old_y, self.walls)
         enter_shelters(self.people, self.shelters)
         contacts = find_contacts(self.people, cell_size)
         contacts = [(a, b) for a, b in contacts
                     if not a.get("sheltered") and not b.get("sheltered")]
+        if self.walls:
+            contacts = [(a, b) for a, b in contacts
+                        if not wall_between(a, b, self.walls)]
         update_infection(
             self.people,
             contacts,
@@ -173,3 +195,17 @@ class World:
     def get_sheltered_count(self):
         """Return the number of people currently inside a shelter."""
         return sum(1 for p in self.people if p.get("sheltered"))
+
+
+    def get_vaccinated_count(self):
+        """Return the number of people who have been vaccinated."""
+        return sum(1 for p in self.people if p.get("vaccinated"))
+
+    def get_total_infected(self):
+        """Return how many people have ever been infected.
+
+        Removed people who are only immune thanks to the vaccine are
+        not counted.
+        """
+        return sum(1 for p in self.people
+                   if p["state"] in ("I", "R") and not p.get("immune"))

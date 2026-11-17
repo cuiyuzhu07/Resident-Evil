@@ -1,6 +1,12 @@
+"""Plotting and animation for V1 (member C).
 
+Draws the SIR curves and the live agent animation, including shelters,
+quarantine walls and the number of vaccinated people.
+"""
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.patches import Circle, Rectangle
+
 
 def plot_sir(S, I, R):
     """Plot the SIR epidemic curves."""
@@ -22,23 +28,17 @@ def plot_sir(S, I, R):
 
     plt.show()
 
-#1.3
 
-if __name__ == "__main__":
-    from . import config
-    from .model import simulate_sir
+def draw_map(ax, world):
+    """Draw the fixed parts of the map: shelters and quarantine walls."""
+    for shelter in getattr(world, "shelters", []):
+        ax.add_patch(Circle((shelter["x"], shelter["y"]), shelter["radius"],
+                            color="tab:blue", alpha=0.15))
+    cell = getattr(world, "wall_cell", 1.0)
+    for cx, cy in getattr(world, "walls", set()):
+        ax.add_patch(Rectangle((cx * cell, cy * cell), cell, cell,
+                               color="black"))
 
-    S, I, R = simulate_sir(
-        config.N,
-        config.I0,
-        config.BETA,
-        config.GAMMA,
-        config.DAYS
-    )
-
-    plot_sir(S, I, R)
-
-#2.5
 
 def animate_world(world, frames=100, interval=100):
     """Animate moving agents and display live S/I/R counts."""
@@ -48,18 +48,20 @@ def animate_world(world, frames=100, interval=100):
     ax.set_xlim(0, world.size)
     ax.set_ylim(0, world.size)
     ax.set_aspect("equal")
-    ax.set_title("Resident Evil - Epidemic Simulation",pad=30)
+    ax.set_title("Resident Evil - Epidemic Simulation", pad=30)
     ax.set_xlabel("X position")
     ax.set_ylabel("Y position")
+
+    draw_map(ax, world)
 
     # Create scatter points and text once
     scatter = ax.scatter([], [], s=25)
     count_text = ax.text(
-    0.02, 1.02, "",
-    transform=ax.transAxes,
-    fontsize=11,
-    va="bottom"
-)
+        0.02, 1.02, "",
+        transform=ax.transAxes,
+        fontsize=11,
+        va="bottom"
+    )
 
     colors = {
         "S": "green",
@@ -79,12 +81,13 @@ def animate_world(world, frames=100, interval=100):
         scatter.set_color([colors[s] for s in states])
 
         # Update live counts
-        count_text.set_text(
-            f"Day: {world.day} | "
-            f"S: {counts['S']} | "
-            f"I: {counts['I']} | "
-            f"R: {counts['R']}"
-        )
+        text = (f"Day: {world.day} | "
+                f"S: {counts['S']} | "
+                f"I: {counts['I']} | "
+                f"R: {counts['R']}")
+        if hasattr(world, "get_vaccinated_count"):
+            text += f" | Vaccinated: {world.get_vaccinated_count()}"
+        count_text.set_text(text)
 
         return scatter, count_text
 
@@ -99,3 +102,18 @@ def animate_world(world, frames=100, interval=100):
 
     plt.show()
     return animation
+
+
+if __name__ == "__main__":
+    from . import config
+    from .model import simulate_sir
+
+    S, I, R = simulate_sir(
+        config.N,
+        config.I0,
+        config.BETA,
+        config.GAMMA,
+        config.DAYS
+    )
+
+    plot_sir(S, I, R)
