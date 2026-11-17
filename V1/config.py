@@ -13,3 +13,12 @@ SHELTERS = [(20, 20, 8, 10),    # x, y, radius, capacity
             (80, 80, 8, 10)]
 FLEE_RADIUS = 10.0   # survivors react to zombies within this distance
 FLEE_SPEED = 1.5     # distance run per step when fleeing
+
+# Task 3.5: quarantine zones, as rectangles (x0, y0, x1, y1).
+# Walls are built on the border of each zone. Use [] to switch off.
+QUARANTINE_ZONES = [(55, 10, 90, 45)]
+
+# Task 3.6: vaccine event. Set VACCINE_DAY = None to switch off.
+VACCINE_DAY = 20          # first day of vaccination
+VACCINE_RATE = 0.05       # fraction of susceptibles vaccinated per day
+VACCINE_EFFICACY = 0.9    # probability that a vaccination gives immunity
